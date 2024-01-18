@@ -1,0 +1,6 @@
+rozetka_xml_generator.admin_settings:
+  title: 'Rozetka XML Generator Settings'
+  description: 'Configure settings for Rozetka XML Generator.'
+  parent: system.admin_config_services
+  route_name: rozetka_xml_generator.settings
+  weight: 100
