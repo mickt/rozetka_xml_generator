@@ -1,0 +1,7 @@
+name: 'Rozetka XML Generator'
+type: module
+description: 'Generates an XML file with products and categories from Drupal Commerce.'
+package: DARTHARTH
+core_version_requirement: ^9 || ^10
+dependencies:
+  - drupal:commerce
