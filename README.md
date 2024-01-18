@@ -9,3 +9,5 @@ Then install a dictionary for the general list of categories.
 Subsequently, you establish what field of choice of taxonomy, added to your goods will be processed as a product category and a product brand.
 
 After that, there will be a list of products that were added by hand on the admin of the product page. With the help of checkboxes, it is possible to exclude some fields, and those that will remain with the parameters of the product.
+
+After putting all the settings, we store them and click on the file generation button.
