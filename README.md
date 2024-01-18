@@ -1,0 +1,1 @@
+# rozetka_xml_generator
