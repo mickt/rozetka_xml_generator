@@ -1,0 +1,16 @@
+<?php
+
+function filterCharacteristicFields($field_definitions, $exclude_fields) {
+    $characteristic_fields = [];
+
+    foreach ($field_definitions as $field_name => $field_definition) {
+        if (strpos($field_name, 'field_') === 0) {
+            // Ігнорувати поля, відмічені у конфігурації
+            if (!in_array($field_name, $exclude_fields)) {
+                $characteristic_fields[$field_name] = $field_definition;
+            }
+        }
+    }
+
+    return $characteristic_fields;
+}
