@@ -92,6 +92,33 @@ class RozetkaXmlSettingsForm extends ConfigFormBase
       '#default_value' => $config->get('brand_field'),
     ];
 
+    $form['old_price_field'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Select Field for Old Price'),
+      '#options' => $this->getVariantPriceFieldsOptions(),
+      '#default_value' => $config->get('old_price_field'),
+    ];
+
+    $all_fields = [];
+
+    foreach ($product_types as $product_type) {
+      $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('commerce_product', $product_type->id());
+      foreach ($field_definitions as $field_name => $field_definition) {
+        if (!isset($all_fields[$field_name])) {
+          if (strpos($field_name, 'field_') === 0) {
+            $all_fields[$field_name] = $field_definition->getLabel();
+          }
+        }
+      }
+    }
+
+    $form['exclude_fields'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Exclude these fields from product characteristics'),
+      '#options' => $all_fields,
+      '#default_value' => $config->get('exclude_fields'),
+    ];
+
 
     $form['actions']['generate'] = [
       '#type' => 'submit',
@@ -100,6 +127,22 @@ class RozetkaXmlSettingsForm extends ConfigFormBase
     ];
 
     return parent::buildForm($form, $form_state);
+  }
+
+  private function getVariantPriceFieldsOptions()
+  {
+    $options = ['' => $this->t('- None -')];
+    $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('commerce_product_variation', 'default');
+
+    foreach ($field_definitions as $field_name => $field_definition) {
+      if ($field_definition->getType() == 'string' || $field_definition->getType() == 'number' || $field_definition->getType() == 'commerce_price') {
+        if (strpos($field_name, 'field_') === 0) {
+          $options[$field_name] = $field_definition->getLabel();
+        }
+      }
+    }
+
+    return $options;
   }
 
   /**
@@ -121,7 +164,8 @@ class RozetkaXmlSettingsForm extends ConfigFormBase
   /**
    * Function to generate XML content.
    */
-  private function generateXml() {
+  private function generateXml()
+  {
     $config = $this->config('rozetka_xml_generator.settings');
     $shop_name = $config->get('shop_name');
     $company_name = $config->get('company_name');
@@ -132,7 +176,6 @@ class RozetkaXmlSettingsForm extends ConfigFormBase
     $cata_terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadTree($selected_vocab);
 
     $brand_field = $config->get('brand_field');
-    \Drupal::logger('my_module')->notice('Поле бренда: ' . print_r($brand_field, TRUE));
 
     $xml_content = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
     $xml_content .= "<yml_catalog date=\"" . date('Y-m-d H:i') . "\">\n";
@@ -159,20 +202,25 @@ class RozetkaXmlSettingsForm extends ConfigFormBase
     foreach ($products as $product) {
       $product_type = $product->bundle();
       $variations = $product->getVariations();
+
+      $exclude_fields_config = $config->get('exclude_fields') ?: [];
+
+      $old_price_config = $config->get('old_price_field') ?: [];
+
       $field_definitions = $field_manager->getFieldDefinitions('commerce_product', $product_type);
 
-      $characteristic_fields = filterCharacteristicFields($field_definitions);
+      $characteristic_fields = filterCharacteristicFields($field_definitions, $exclude_fields_config);
 
       foreach ($variations as $variation) {
         if ($variation->hasField('price') && !$variation->get('price')->isEmpty()) {
 
           $brand_name = 'NoName';
           if (!empty($brand_field) && $product->hasField($brand_field) && !$product->get($brand_field)->isEmpty()) {
-            
+
             $brand_term_id = $product->get($brand_field)->target_id;
             $brand_term = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->load($brand_term_id);
             if ($brand_term) {
-              
+
               $brand_name = $brand_term->getName();
             }
           }
@@ -181,9 +229,9 @@ class RozetkaXmlSettingsForm extends ConfigFormBase
           $formatted_price = number_format($price, 2, '.', '');
 
           $old_price = '';
-          if ($variation->hasField('field_old_price') && !$variation->get('field_old_price')->isEmpty()) {
-            $old_price_value = $variation->get('field_old_price')->first()->getValue();
-            $old_price_number = $old_price_value['number'];
+          if (!empty($old_price_config) && $variation->hasField($old_price_config) && !$variation->get($old_price_config)->isEmpty()) {
+            $old_price_value = $variation->get($old_price_config)->first()->getValue();
+            $old_price_number = $old_price_value['number']; // Або інший ключ, залежно від структури поля
 
             if ($old_price_number > $price) {
               $old_price = number_format($old_price_number, 2, '.', '');
@@ -289,6 +337,14 @@ class RozetkaXmlSettingsForm extends ConfigFormBase
 
     $this->config('rozetka_xml_generator.settings')
       ->set('brand_field', $form_state->getValue('brand_field'))
+      ->save();
+
+    $this->config('rozetka_xml_generator.settings')
+      ->set('exclude_fields', $form_state->getValue('exclude_fields'))
+      ->save();
+
+    $this->config('rozetka_xml_generator.settings')
+      ->set('old_price_field', $form_state->getValue('old_price_field'))
       ->save();
 
     parent::submitForm($form, $form_state);
