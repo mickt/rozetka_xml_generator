@@ -10,4 +10,6 @@ Subsequently, you establish what field of choice of taxonomy, added to your good
 
 After that, there will be a list of products that were added by hand on the admin of the product page. With the help of checkboxes, it is possible to exclude some fields, and those that will remain with the parameters of the product.
 
+It is also possible to choose the old price field from the produc variationt.
+
 After putting all the settings, we store them and click on the file generation button.
