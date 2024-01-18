@@ -1,0 +1,7 @@
+rozetka_xml_generator.settings:
+  path: '/admin/config/services/rozetka-xml'
+  defaults:
+    _form: '\Drupal\rozetka_xml_generator\Form\RozetkaXmlSettingsForm'
+    _title: 'Rozetka XML Generator Settings'
+  requirements:
+    _permission: 'administer site configuration'
